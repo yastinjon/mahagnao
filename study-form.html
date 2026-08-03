@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Form &mdash; MVNP Research Repository</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .study-form-card { max-width: 640px; margin: 2.5rem auto; background: white; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .study-form-band { height: 44px; background: var(--primary); }
+  .study-form-body { padding: 0 2rem 2rem; }
+  .study-form-body h1 { text-align: center; margin: 1.25rem 0 .4rem; }
+  .study-form-body > p.subtitle { text-align: center; color: var(--muted); margin-bottom: 1.75rem; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .form-actions { display: flex; gap: .75rem; margin-top: .5rem; }
+  .btn-danger { border: 1px solid #c0392b; color: #c0392b; background: #fff; }
+  .btn-danger:hover { background: #fdecea; }
+  @media (max-width: 640px) {
+    .study-form-card { margin: 1rem; }
+    .form-row-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-requires-staff="true">
+
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <div class="nav-logos">
+        <img src="assets/denr-logo.png" alt="DENR Logo">
+        <img src="assets/mvnp-logo.png" alt="MVNP Logo">
+      </div>
+      <div>
+        <div class="nav-title">MVNP Research Repository</div>
+        <div class="nav-sub">Mahagnao Volcano Natural Park&nbsp;&bull;&nbsp;Official Research Archive</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="repository.html" data-page="repository.html">Repository</a>
+      <a href="assets/mvnp-research-guidelines.pdf" target="_blank">Guidelines</a>
+      <a href="about.html" data-page="about.html">About</a>
+      <a href="contact.html" data-page="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="study-form-card">
+  <div class="study-form-band"></div>
+  <div class="study-form-body">
+    <h1 id="formTitle">Add Research</h1>
+    <p class="subtitle">Add or update research entries with full metadata and PDF attachment.</p>
+
+    <form id="studyForm" class="auth-form">
+      <div id="formError" class="form-errors" style="display:none;"></div>
+
+      <div class="form-row-2">
+        <label>Study id
+          <input type="text" id="fStudyId" disabled placeholder="Auto-generated on save">
+        </label>
+        <label>Year
+          <input type="number" id="fYear" required min="1900" max="2100">
+        </label>
+      </div>
+
+      <label>Title
+        <input type="text" id="fTitle" required>
+      </label>
+
+      <label>Authors
+        <input type="text" id="fAuthors" required placeholder="e.g. RM Modina, CB Cuta">
+      </label>
+
+      <div class="form-row-2">
+        <label>Category
+          <select id="fCategory" required></select>
+        </label>
+        <label>Study type
+          <select id="fType" required></select>
+        </label>
+      </div>
+
+      <div class="form-row-2" style="align-items:end;">
+        <label>Status
+          <select id="fStatus" required>
+            <option value="MVNP-PAMB Approved Publication">MVNP-PAMB Approved Publication</option>
+            <option value="Legacy Study (Pre-Guidelines)">Legacy Study (Pre-Guidelines)</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Pending Endorsement">Pending Endorsement</option>
+          </select>
+        </label>
+        <label class="checkbox-label" style="margin-bottom:.9rem;">
+          <input type="checkbox" id="fFeatured">
+          Add to Featured
+        </label>
+      </div>
+
+      <label>Abstract
+        <textarea id="fAbstract" rows="5" placeholder="Optional"></textarea>
+      </label>
+
+      <div id="fPdfCurrentWrap" style="display:none;">
+        <p style="font-size:.85rem; margin-bottom:.3rem;">Pdf file Currently: <a id="fPdfCurrentLink" href="#" target="_blank"></a></p>
+        <label class="checkbox-label" style="font-size:.85rem;">
+          <input type="checkbox" id="fPdfClear">
+          Clear
+        </label>
+      </div>
+      <label id="fPdfChangeLabel">Change:
+        <input type="file" id="fPdfFile" accept=".pdf">
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
+        <a href="repository.html" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+
+<footer>
+  <p>&copy; 2026 Mahagnao Volcano Natural Park &ndash; Protected Area Management Office</p>
+</footer>
+
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="main.js"></script>
+<script>
+  var params = new URLSearchParams(location.search);
+  var editingStudyId = params.get('id');
+
+  CATEGORIES.forEach(function (c) {
+    var opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    document.getElementById('fCategory').appendChild(opt);
+  });
+  STUDY_TYPES.forEach(function (t) {
+    var opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    document.getElementById('fType').appendChild(opt);
+  });
+
+  if (editingStudyId) {
+    var s = MVNP.getStudies().find(function (x) { return x.study_id === editingStudyId; });
+    if (!s) {
+      MVNP.flash('That study could not be found.', 'error');
+      location.href = 'repository.html';
+    } else {
+      document.getElementById('formTitle').textContent = 'Edit Research';
+      document.getElementById('submitBtn').textContent = 'Save Changes';
+      document.getElementById('fStudyId').value = s.study_id;
+      document.getElementById('fTitle').value = s.title;
+      document.getElementById('fAuthors').value = s.authors;
+      document.getElementById('fYear').value = s.year;
+      document.getElementById('fType').value = s.study_type;
+      document.getElementById('fCategory').value = s.category;
+      if (![...document.getElementById('fStatus').options].some(function (o) { return o.value === s.status; })) {
+        var extraOpt = document.createElement('option');
+        extraOpt.value = s.status; extraOpt.textContent = s.status;
+        document.getElementById('fStatus').appendChild(extraOpt);
+      }
+      document.getElementById('fStatus').value = s.status;
+      document.getElementById('fFeatured').checked = !!s.featured;
+      document.getElementById('fAbstract').value = s.abstract || '';
+      if (s.pdf_file) {
+        document.getElementById('fPdfCurrentWrap').style.display = 'block';
+        var link = document.getElementById('fPdfCurrentLink');
+        link.href = s.pdf_file;
+        link.textContent = s.pdf_file;
+      }
+    }
+  } else {
+    document.getElementById('formTitle').textContent = 'Add Research';
+    document.getElementById('submitBtn').textContent = 'Create Study';
+    document.getElementById('fYear').value = new Date().getFullYear();
+    document.getElementById('fPdfChangeLabel').firstChild.textContent = 'Pdf file';
+  }
+
+  document.getElementById('studyForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = document.getElementById('formError');
+    var title = document.getElementById('fTitle').value.trim();
+    var authors = document.getElementById('fAuthors').value.trim();
+    var year = parseInt(document.getElementById('fYear').value, 10);
+    var status = document.getElementById('fStatus').value;
+
+    if (!title) { err.textContent = 'Title is required.'; err.style.display = 'block'; return; }
+    if (!authors) { err.textContent = 'Authors are required.'; err.style.display = 'block'; return; }
+
+    var data = {
+      title: title,
+      authors: authors,
+      year: year,
+      study_type: document.getElementById('fType').value,
+      category: document.getElementById('fCategory').value,
+      status: status,
+      featured: document.getElementById('fFeatured').checked,
+      abstract: document.getElementById('fAbstract').value.trim()
+    };
+
+    var chosenFile = document.getElementById('fPdfFile').files[0];
+    if (chosenFile) {
+      data.pdf_file = 'pdfs/' + chosenFile.name;
+    } else if (editingStudyId && document.getElementById('fPdfClear').checked) {
+      data.pdf_file = '';
+    }
+
+    if (editingStudyId) {
+      MVNP.updateStudy(editingStudyId, data);
+      MVNP.flash('Research updated successfully.', 'success');
+    } else {
+      MVNP.addStudy(data);
+      MVNP.flash('Research added to the repository.', 'success');
+    }
+    location.href = 'repository.html';
+  });
+</script>
+</body>
+</html>

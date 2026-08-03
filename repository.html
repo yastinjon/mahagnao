@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Repository &mdash; MVNP</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; padding: 1.6rem; max-width: 440px; width: 100%; }
+  .modal-box h2 { margin-bottom: .25rem; }
+  .modal-box p { color: var(--muted); font-size: .88rem; margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1rem; }
+  .repo-toolbar-bottom { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+  .btn-danger { border: 1px solid #c0392b; color: #c0392b; background: #fff; }
+  .btn-danger:hover { background: #fdecea; }
+  .row-actions { display: flex; flex-wrap: nowrap; gap: .4rem; }
+  .row-actions .btn { min-width: 0; padding: .4rem .7rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <div class="nav-logos">
+        <img src="assets/denr-logo.png" alt="DENR Logo">
+        <img src="assets/mvnp-logo.png" alt="MVNP Logo">
+      </div>
+      <div>
+        <div class="nav-title">MVNP Research Repository</div>
+        <div class="nav-sub">Mahagnao Volcano Natural Park&nbsp;&bull;&nbsp;Official Research Archive</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="repository.html" data-page="repository.html" class="active">Repository</a>
+      <a href="assets/mvnp-research-guidelines.pdf" target="_blank">Guidelines</a>
+      <a href="about.html" data-page="about.html">About</a>
+      <a href="contact.html" data-page="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="repository-shell">
+  <div class="repository-intro">
+    <h1 class="page-title">Research Repository</h1>
+    <p class="page-subtitle">
+      Browse scientific studies, technical reports, theses, and publications conducted within
+      Mahagnao Volcano Natural Park.
+      <strong id="result-count"></strong>
+    </p>
+  </div>
+
+  <div class="filters">
+    <input id="search-input" type="text" placeholder="Search title, author, year, keyword..." autocomplete="off" style="flex:2 1 200px;min-width:160px;">
+    <select id="type-filter" style="min-width:130px;max-width:180px;flex:1 1 130px;">
+      <option value="">All Types</option>
+    </select>
+    <select id="status-filter" style="min-width:140px;max-width:200px;flex:1 1 140px;">
+      <option value="">All Status</option>
+    </select>
+    <select id="category-filter" style="min-width:180px;max-width:260px;flex:1 1 180px;">
+      <option value="">All Categories</option>
+    </select>
+    <button id="clear-btn" class="btn btn-secondary" style="padding:.7rem 1rem;">Clear</button>
+  </div>
+
+  <div class="table-container repository-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:55px;">Year</th>
+          <th>Title</th>
+          <th>Authors</th>
+          <th style="width:120px;">Type</th>
+          <th style="width:200px;">Category</th>
+          <th>Status</th>
+          <th style="width:80px;">PDF</th>
+          <th id="actions-head" style="width:150px; display:none;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+  <div class="repo-toolbar-bottom" id="addResearchWrap" style="display:none;">
+    <a href="study-form.html" class="btn btn-primary">Add Research</a>
+  </div>
+</div>
+</main>
+
+<!-- Delete confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h2>Delete study</h2>
+    <p id="deleteText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Mahagnao Volcano Natural Park &ndash; Protected Area Management Office</p>
+</footer>
+
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="main.js"></script>
+<script>
+  var deletingStudyId = null;
+
+  var typeSelect = document.getElementById('type-filter');
+  var statusSelect = document.getElementById('status-filter');
+  var catSelect = document.getElementById('category-filter');
+  var isAdmin = MVNP.isStaff();
+
+  if (isAdmin) {
+    document.getElementById('actions-head').style.display = 'table-cell';
+    document.getElementById('addResearchWrap').style.display = 'flex';
+  }
+
+  CATEGORIES.forEach(function (c) {
+    var opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    catSelect.appendChild(opt);
+  });
+
+  function refreshFilterOptions() {
+    var studies = MVNP.getStudies();
+    var currentType = typeSelect.value;
+    var currentStatus = statusSelect.value;
+
+    typeSelect.innerHTML = '<option value="">All Types</option>' +
+      STUDY_TYPES.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    typeSelect.value = currentType;
+
+    var uniqueStatuses = [...new Set(studies.map(function (s) { return s.status; }))];
+    statusSelect.innerHTML = '<option value="">All Status</option>' +
+      uniqueStatuses.map(function (s) { return '<option value="' + s + '">' + s + '</option>'; }).join('');
+    statusSelect.value = currentStatus;
+  }
+
+  function render() {
+    refreshFilterOptions();
+    var q = document.getElementById('search-input').value.trim().toLowerCase();
+    var ftype = typeSelect.value;
+    var fstatus = statusSelect.value;
+    var fcat = catSelect.value;
+
+    var filtered = MVNP.getStudies().filter(function (s) {
+      var matchesQ = !q || (s.title + ' ' + s.authors + ' ' + s.year).toLowerCase().indexOf(q) !== -1;
+      var matchesType = !ftype || s.study_type === ftype;
+      var matchesStatus = !fstatus || s.status === fstatus;
+      var matchesCat = !fcat || s.category === fcat;
+      return matchesQ && matchesType && matchesStatus && matchesCat;
+    });
+
+    document.getElementById('result-count').textContent =
+      filtered.length + ' result' + (filtered.length === 1 ? '' : 's') + ' found.';
+
+    var body = document.getElementById('results-body');
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="' + (isAdmin ? 8 : 7) + '">No studies found matching your search.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = filtered.map(function (s) {
+      var actions = isAdmin
+        ? '<td style="white-space:nowrap;"><div class="row-actions">' +
+            '<a class="btn btn-secondary btn-sm" href="study-form.html?id=' + s.study_id + '">Edit</a>' +
+            '<button class="btn btn-danger btn-sm" onclick="openDeleteModal(\'' + s.study_id + '\')">Delete</button>' +
+          '</div></td>'
+        : '';
+      return '<tr>' +
+        '<td>' + s.year + '</td>' +
+        '<td>' + s.title + '</td>' +
+        '<td>' + s.authors + '</td>' +
+        '<td><span class="tag">' + s.study_type + '</span></td>' +
+        '<td><span class="tag">' + s.category + '</span></td>' +
+        '<td>' + s.status + '</td>' +
+        '<td style="white-space:nowrap;"><a class="btn btn-primary btn-sm" href="viewer.html?id=' + s.study_id + '">View</a></td>' +
+        actions +
+        '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('search-input').addEventListener('input', render);
+  typeSelect.addEventListener('change', render);
+  statusSelect.addEventListener('change', render);
+  catSelect.addEventListener('change', render);
+  document.getElementById('clear-btn').addEventListener('click', function () {
+    document.getElementById('search-input').value = '';
+    typeSelect.value = '';
+    statusSelect.value = '';
+    catSelect.value = '';
+    render();
+  });
+
+  function openDeleteModal(studyId) {
+    var s = MVNP.getStudies().find(function (x) { return x.study_id === studyId; });
+    if (!s) return;
+    deletingStudyId = studyId;
+    document.getElementById('deleteText').textContent = 'Are you sure you want to delete "' + s.title + '"?';
+    document.getElementById('deleteModal').classList.add('open');
+  }
+  function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
+  function confirmDelete() {
+    MVNP.deleteStudy(deletingStudyId);
+    MVNP.flash('Study deleted from the repository.', 'success');
+    closeDeleteModal();
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>

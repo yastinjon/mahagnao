@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounts &mdash; MVNP Research Repository</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .acct-shell { max-width: 900px; margin: 0 auto; }
+
+  .acct-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+  }
+
+  .acct-page-header h1 {
+    font-size: 2rem;
+    margin-bottom: .3rem;
+  }
+
+  .acct-page-header p {
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  .acct-search-label {
+    display: block;
+    font-weight: 600;
+    font-size: .92rem;
+    margin-bottom: .5rem;
+    color: var(--text);
+  }
+
+  .acct-search-wrap { margin-bottom: 1.5rem; }
+
+  .acct-toolbar input {
+    width: 100%;
+    padding: .75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: .95rem;
+    box-sizing: border-box;
+  }
+
+  .acct-toolbar input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(23,107,63,.12);
+  }
+
+  .acct-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
+  }
+
+  .acct-card table { width: 100%; border-collapse: collapse; }
+  .acct-card thead th {
+    background: var(--primary-light);
+    text-align: left;
+    padding: .65rem .75rem;
+    font-size: .85rem;
+    border-radius: 8px 8px 0 0;
+  }
+  .acct-card tbody td {
+    padding: .85rem .75rem;
+    border-bottom: 1px solid var(--border);
+    font-size: .93rem;
+  }
+  .acct-card tbody tr:last-child td { border-bottom: none; }
+
+  .yn-yes { color: var(--primary); font-weight: 600; }
+  .yn-no { color: var(--muted); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; padding: 1.6rem; max-width: 440px; width: 100%; }
+  .modal-box h2 { margin-bottom: .25rem; }
+  .modal-box p { color: var(--muted); font-size: .88rem; margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1rem; }
+
+  @media (max-width: 640px) {
+    .acct-page-header { flex-direction: column; }
+    .acct-page-header .btn { width: 100%; }
+  }
+</style>
+</head>
+<body data-requires-staff="true">
+
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <div class="nav-logos">
+        <img src="assets/denr-logo.png" alt="DENR Logo">
+        <img src="assets/mvnp-logo.png" alt="MVNP Logo">
+      </div>
+      <div>
+        <div class="nav-title">MVNP Research Repository</div>
+        <div class="nav-sub">Mahagnao Volcano Natural Park&nbsp;&bull;&nbsp;Official Research Archive</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="repository.html" data-page="repository.html">Repository</a>
+      <a href="assets/mvnp-research-guidelines.pdf" target="_blank">Guidelines</a>
+      <a href="about.html" data-page="about.html">About</a>
+      <a href="contact.html" data-page="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="acct-shell">
+
+  <div class="acct-page-header">
+    <div>
+      <h1>User Accounts</h1>
+      <p>Manage registered accounts and view when they joined.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">Add Account</button>
+  </div>
+
+  <div class="acct-search-wrap acct-toolbar">
+    <label class="acct-search-label" for="searchInput">Search users</label>
+    <input type="text" id="searchInput" placeholder="Search by username or email">
+  </div>
+
+  <div class="acct-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Joined</th>
+          <th style="width:70px;">Active</th>
+          <th style="width:70px;">Staff</th>
+          <th style="width:170px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="userRows"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <h2 id="modalTitle">Create Account</h2>
+    <p id="modalSubtitle">Add a new user to the repository.</p>
+    <form id="userForm" class="auth-form">
+      <div id="modalError" class="form-errors" style="display:none;"></div>
+      <label>Username
+        <input type="text" id="fUsername" required>
+      </label>
+      <label id="fPasswordWrap">Password
+        <input type="password" id="fPassword" autocomplete="new-password">
+      </label>
+      <label>Email
+        <input type="email" id="fEmail">
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="fStaff">
+        Administrator (staff) access
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h2>Delete account</h2>
+    <p id="deleteText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" style="border-color:#c0392b;color:#c0392b;" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <p>&copy; 2026 Mahagnao Volcano Natural Park &ndash; Protected Area Management Office</p>
+</footer>
+
+<script src="auth.js"></script>
+<script src="main.js"></script>
+<script>
+var editingUserId = null;
+var deletingUserId = null;
+
+function fmt(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function render() {
+  var q = document.getElementById('searchInput').value.trim().toLowerCase();
+  var users = MVNP.listUsers().filter(function (u) {
+    return !q || u.username.toLowerCase().indexOf(q) !== -1 || (u.email || '').toLowerCase().indexOf(q) !== -1;
+  });
+
+  var rows = document.getElementById('userRows');
+  if (!users.length) {
+    rows.innerHTML = '<tr class="empty-row"><td colspan="6">No accounts found.</td></tr>';
+    return;
+  }
+
+  rows.innerHTML = users.map(function (u) {
+    var isActive = u.is_active !== false;
+    return '<tr>' +
+      '<td>' + u.username + '</td>' +
+      '<td>' + (u.email || '&mdash;') + '</td>' +
+      '<td>' + fmt(u.date_joined) + '</td>' +
+      '<td><span class="' + (isActive ? 'yn-yes' : 'yn-no') + '">' + (isActive ? 'Yes' : 'No') + '</span></td>' +
+      '<td><span class="' + (u.is_staff ? 'yn-yes' : 'yn-no') + '">' + (u.is_staff ? 'Yes' : 'No') + '</span></td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-secondary btn-sm" onclick="openEditModal(' + u.id + ')">Edit</button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="openDeleteModal(' + u.id + ')">Delete</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function openAddModal() {
+  editingUserId = null;
+  document.getElementById('modalTitle').textContent = 'Create Account';
+  document.getElementById('modalSubtitle').textContent = 'Add a new user to the repository.';
+  document.getElementById('modalSubmitBtn').textContent = 'Create User';
+  document.getElementById('fUsername').value = '';
+  document.getElementById('fUsername').disabled = false;
+  document.getElementById('fPassword').value = '';
+  document.getElementById('fPasswordWrap').style.display = 'block';
+  document.getElementById('fEmail').value = '';
+  document.getElementById('fStaff').checked = false;
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('userModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  var user = MVNP.listUsers().filter(function (u) { return u.id === id; })[0];
+  if (!user) return;
+  editingUserId = id;
+  document.getElementById('modalTitle').textContent = 'Edit ' + user.username;
+  document.getElementById('modalSubtitle').textContent = 'Update this user\'s account details.';
+  document.getElementById('modalSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('fUsername').value = user.username;
+  document.getElementById('fUsername').disabled = true;
+  document.getElementById('fPasswordWrap').style.display = 'none';
+  document.getElementById('fEmail').value = user.email || '';
+  document.getElementById('fStaff').checked = !!user.is_staff;
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('userModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('userModal').classList.remove('open'); }
+
+document.getElementById('userForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var err = document.getElementById('modalError');
+  var email = document.getElementById('fEmail').value.trim();
+  var isStaff = document.getElementById('fStaff').checked;
+
+  if (editingUserId === null) {
+    var username = document.getElementById('fUsername').value.trim();
+    var password = document.getElementById('fPassword').value;
+    if (!username || username.length < 3) {
+      err.textContent = 'Username must be at least 3 characters.'; err.style.display = 'block'; return;
+    }
+    if (!password || password.length < 6) {
+      err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return;
+    }
+    var res = MVNP.addUser({ username: username, password: password, email: email, is_staff: isStaff });
+    if (!res.ok) { err.textContent = res.error; err.style.display = 'block'; return; }
+    MVNP.flash('User account created successfully.', 'success');
+  } else {
+    MVNP.updateUser(editingUserId, { email: email, is_staff: isStaff });
+    MVNP.flash('User account updated successfully.', 'success');
+  }
+  closeModal();
+  render();
+  MVNP.renderNav();
+});
+
+function openDeleteModal(id) {
+  var user = MVNP.listUsers().filter(function (u) { return u.id === id; })[0];
+  if (!user) return;
+  deletingUserId = id;
+  document.getElementById('deleteText').textContent = 'Are you sure you want to delete "' + user.username + '"? This cannot be undone.';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
+function confirmDelete() {
+  var res = MVNP.deleteUser(deletingUserId);
+  if (res.ok) {
+    MVNP.flash('User account deleted successfully.', 'success');
+  } else {
+    MVNP.flash(res.error, 'error');
+  }
+  closeDeleteModal();
+  render();
+}
+
+document.getElementById('searchInput').addEventListener('input', render);
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>

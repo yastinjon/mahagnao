@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MVNP Research Repository</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <div class="nav-logos">
+        <img src="assets/denr-logo.png" alt="DENR Logo">
+        <img src="assets/mvnp-logo.png" alt="MVNP Logo">
+      </div>
+      <div>
+        <div class="nav-title">MVNP Research Repository</div>
+        <div class="nav-sub">Mahagnao Volcano Natural Park&nbsp;&bull;&nbsp;Official Research Archive</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html" class="active">Home</a>
+      <a href="repository.html" data-page="repository.html">Repository</a>
+      <a href="assets/mvnp-research-guidelines.pdf" target="_blank">Guidelines</a>
+      <a href="about.html" data-page="about.html">About</a>
+      <a href="contact.html" data-page="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- Hero -->
+<section class="hero">
+  <div>
+    <h1>Mahagnao Volcano Natural Park<br>Research Repository</h1>
+    <p>
+      The official repository of scientific research, biodiversity assessments,
+      technical reports, journal articles, theses and other knowledge products
+      generated within Mahagnao Volcano Natural Park.
+    </p>
+    <div class="hero-buttons">
+      <a href="repository.html" class="btn btn-primary">Browse Repository</a>
+      <a href="about.html" class="btn btn-secondary">Research Guidelines</a>
+      <a href="application.html" class="btn btn-secondary">Submit Application</a>
+    </div>
+  </div>
+
+  <div class="hero-note">
+    <strong>Research Governance</strong><br><br>
+    Research activities conducted within Mahagnao Volcano Natural Park shall comply with
+    applicable provisions of RA 11038 (ENIPAS Act), RA 9147 (Wildlife Resources Conservation
+    and Protection Act), and relevant DENR policies and issuances.
+  </div>
+</section>
+
+<!-- Repository Statistics -->
+<section>
+  <h2 class="section-title">Repository Statistics</h2>
+  <div class="cards" id="stats-cards"></div>
+</section>
+
+<!-- Featured Research -->
+<section>
+  <h2 class="section-title">Featured Research</h2>
+  <div class="latest-grid" id="featured-grid"></div>
+</section>
+
+</main>
+
+<footer>
+  <p>&copy; 2026 Mahagnao Volcano Natural Park &ndash; Protected Area Management Office</p>
+</footer>
+
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="main.js"></script>
+<script>
+  var totalStudies = STUDIES.length;
+  var journalArticles = STUDIES.filter(function (s) { return s.study_type === 'Journal Article'; }).length;
+  var years = STUDIES.map(function (s) { return s.year; });
+  var span = years.length ? (Math.max.apply(null, years) - Math.min.apply(null, years)) : 0;
+
+  document.getElementById('stats-cards').innerHTML =
+    '<div class="card"><div class="card-label">Total Studies</div>' +
+    '<div class="card-value">' + totalStudies + '</div>' +
+    '<div class="card-sub">Research outputs archived</div></div>' +
+    '<div class="card"><div class="card-label">Journal Articles</div>' +
+    '<div class="card-value">' + journalArticles + '</div>' +
+    '<div class="card-sub">Peer-reviewed publications</div></div>' +
+    '<div class="card"><div class="card-label">Research Span</div>' +
+    '<div class="card-value">' + span + '</div>' +
+    '<div class="card-sub">Years represented</div></div>';
+
+  var featured = STUDIES.filter(function (s) { return s.featured; });
+  document.getElementById('featured-grid').innerHTML = featured.map(function (s) {
+    return '<div class="study-card">' +
+      '<div><div class="study-title">' + s.title + '</div>' +
+      '<div class="study-meta">' + s.authors + ' (' + s.year + ')</div>' +
+      '<span class="tag">' + s.category + '</span></div>' +
+      '<a class="btn btn-secondary" href="viewer.html?id=' + s.study_id + '">View Research</a>' +
+      '</div>';
+  }).join('');
+</script>
+</body>
+</html>
